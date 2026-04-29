@@ -1,70 +1,90 @@
-# Getting Started with Create React App
+# Keycloak JWT SSO - TP - Louis Aubert
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Objectif
+Mettre en place une authentification SSO avec Keycloak et une application React permettant de récupérer et afficher le payload d'un JWT.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Stack utilisée
+- Keycloak (Docker)
+- React
+- OAuth2 / OpenID Connect
+- JWT
+- http-proxy-middleware (CORS)
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 1. Lancer Keycloak
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+docker run -p 8080:8080 \
+  -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+  -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+  quay.io/keycloak/keycloak:26.0.1 start-dev
+```
 
-### `npm test`
+Accès : http://localhost:8080  
+Login : `admin` / `admin`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 2. Configuration Keycloak
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**Realm :**
+- `louis-tp-iam`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**Client :**
+- `client_id` : `my-client`
+- Client Authentication : ON
+- Direct Access Grants : ON
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Utilisateur :**
+- username : `user1`
+- password : `password1`
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 3. Lancer l'application React
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+cd keycloak-jwt-app
+npm install
+npm start
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Accès : http://localhost:3000
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## 4. Fonctionnement
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. L'utilisateur se connecte avec ses identifiants Keycloak
+2. Une requête OAuth2 est envoyée à Keycloak
+3. Un access token JWT est retourné
+4. Le token est décodé côté front
+5. Le payload est affiché dans un tableau HTML
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 5. Proxy CORS
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Un proxy (`http-proxy-middleware`) est utilisé pour éviter les erreurs CORS entre :
+- React (`localhost:3000`)
+- Keycloak (`localhost:8080`)
 
-### Analyzing the Bundle Size
+Fichier : `src/setupProxy.js`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 6. Résultat attendu
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- Login fonctionnel
+- JWT récupéré
+- Payload affiché dans un tableau HTML
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 7. SSO
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Keycloak agit comme fournisseur d'identité central (SSO via OpenID Connect), permettant une authentification unique réutilisable par plusieurs applications.
+```
